@@ -14,6 +14,7 @@ interface ProjectSidebarProps {
 function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
   return (
     <aside
+    inert={!isOpen}
       aria-hidden={!isOpen}
       className={cn(
         "fixed top-14 bottom-0 left-0 z-40 flex w-80 -translate-x-full flex-col border-r border-surface-border bg-elevated/95 backdrop-blur-xl transition-transform duration-200 ease-out",
