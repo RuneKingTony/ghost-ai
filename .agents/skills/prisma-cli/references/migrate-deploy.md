@@ -93,8 +93,11 @@ If a migration fails, `migrate deploy` exits with error. The failed migration is
 
 To fix:
 1. Resolve the issue (fix SQL, database state, etc.)
-2. Mark as resolved: `prisma migrate resolve --applied <migration_name>`
-3. Re-run: `prisma migrate deploy`
+2. If the migration’s intended database state already exists or it was completed manually, mark it resolved with:
+   `prisma migrate resolve --applied <migration_name>`
+3. If you reverted the failed changes so the database should retry the migration, mark it rolled back with:
+   `prisma migrate resolve --rolled-back <migration_name>`
+4. Re-run: `prisma migrate deploy`
 
 ### Check status first
 
@@ -121,7 +124,7 @@ export default defineConfig({
 
 ## Best Practices
 
-1. Always run `migrate status` before `migrate deploy` in CI
+1. Run `migrate deploy` directly in CI; status checks may be helpful but are not a blocking prerequisite
 2. Have a rollback plan (backup before migrations)
 3. Test migrations in staging first
 4. Never use `migrate dev` in production

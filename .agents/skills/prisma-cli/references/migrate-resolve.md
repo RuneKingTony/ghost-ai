@@ -55,3 +55,5 @@ This tells Prisma "Forget this migration run, let me try applying it again".
 
 - [Baselining](https://www.prisma.io/docs/guides/database/developing-with-prisma-migrate/baselining)
 - [Troubleshooting](https://www.prisma.io/docs/guides/database/production-troubleshooting)
+
+> Validate both links through your CI link checker to ensure documentation paths remain current.

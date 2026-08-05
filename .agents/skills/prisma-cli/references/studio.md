@@ -106,7 +106,7 @@ Some recent builds also expose AI-assisted SQL authoring. Treat these as interac
 
 - Development tool only
 - Not for production use
-- Limited to configured database
+- Limited to the database selected by the config or `--url`, and can modify any database reachable through that connection
 - Prisma Studio in Prisma 7 currently targets PostgreSQL, MySQL, and SQLite first
 - For reproducible application logic, prefer Prisma Client and checked-in SQL scripts
 

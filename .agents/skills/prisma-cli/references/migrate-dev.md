@@ -121,12 +121,12 @@ prisma migrate dev --name add_created_at
 
 ### Handling data loss warnings
 
-When a migration would cause data loss:
+When a migration would cause data loss, `prisma migrate dev` uses its interactive confirmation flow:
 
 ```bash
 prisma migrate dev --name remove_field
 # Warning: You are about to delete data...
-# Accept with: --accept-data-loss
+# Follow the interactive prompt to continue or cancel
 ```
 
 ## Shadow Database

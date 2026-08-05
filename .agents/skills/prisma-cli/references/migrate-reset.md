@@ -10,10 +10,11 @@ prisma migrate reset [options]
 
 ## What It Does
 
-1. **Drops** the database (if possible) or deletes all data/tables
-2. **Re-creates** the database
+1. **Attempts to drop** the database, or otherwise delete all data/tables
+2. **Attempts to re-create** the database
 3. **Applies** all migrations from `prisma/migrations/`
-4. Stops there - run seed and generate explicitly if needed
+4. If dropping or recreating fails, falls back to a best-effort soft reset
+5. Stops there - run seed and generate explicitly if needed
 
 **Warning: All data will be lost.**
 
@@ -52,8 +53,10 @@ prisma migrate reset --schema=./custom/schema.prisma
 ## When to Use
 
 - **Development**: When you want a fresh start
-- **Testing**: Resetting test database before suites
-- **Drift Recovery**: When the database is out of sync and you can't migrate
+- **Testing**: Resetting test databases before suites
+
+**Do not use `prisma migrate reset` in staging or production.**
+It drops or deletes all data and is intended only for development and test databases.
 
 ## Follow-up Steps
 

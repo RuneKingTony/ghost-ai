@@ -35,12 +35,12 @@ prisma migrate status
 ```
 
 Output example (Up to date):
-```
+```text
 Database schema is up to date!
 ```
 
 Output example (Pending):
-```
+```text
 Following migration have not yet been applied:
   20240115120000_add_user
 
@@ -59,7 +59,7 @@ To apply migrations in production, run:
 
 ## Exit Codes
 
-- `0`: Success (may have pending migrations, but command ran successfully)
-- `1`: Error
+- `0`: Success, no error
+- `1`: Pending migrations, divergent history, missing migration table, failed migrations, or database connection errors
 
-To check for pending migrations programmatically, you might need to parse the output or use `migrate diff` with exit code flags.
+`migrate status` does not use `0` to indicate pending migrations reliably.

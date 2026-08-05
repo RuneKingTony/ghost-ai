@@ -121,7 +121,7 @@ const prisma = new PrismaClient({ adapter }).$extends({
   model: {
     user: {
       async findByEmail(email: string) {
-        return prisma.user.findUnique({ where: { email } })
+        return Prisma.getExtensionContext(this).user.findUnique({ where: { email } })
       }
     }
   }
@@ -163,6 +163,9 @@ const prisma = new PrismaClient({ adapter }).$extends({
 })
 
 const user = await prisma.user.findFirst()
+if (!user) {
+  throw new Error('User not found')
+}
 console.log(user.fullName) // Computed field
 ```
 

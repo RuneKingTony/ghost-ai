@@ -159,10 +159,10 @@ await prisma.user.delete({
 ### Transactions
 
 ```typescript
-const [user, post] = await prisma.$transaction([
-  prisma.user.create({ data: { email: 'alice@prisma.io' } }),
-  prisma.post.create({ data: { title: 'Hello', authorId: 1 } })
-])
+await prisma.$transaction(async (tx) => {
+  const user = await tx.user.create({ data: { email: 'alice@prisma.io' } })
+  await tx.post.create({ data: { title: 'Hello', authorId: user.id } })
+})
 ```
 
 ## Rule Files

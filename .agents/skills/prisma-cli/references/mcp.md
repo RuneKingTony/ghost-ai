@@ -35,5 +35,5 @@ prisma mcp
 
 ## References
 
-- [Prisma CLI `mcp` command](https://docs.prisma.io/docs/cli/mcp)
+- [Prisma CLI `mcp` command](https://www.prisma.io/docs/ai/tools/mcp-server)
 - [Prisma MCP Server](https://www.prisma.io/docs/ai/tools/chatgpt)

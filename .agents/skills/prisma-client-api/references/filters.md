@@ -74,7 +74,7 @@ where: { deletedAt: null }
 // Is not null
 where: { deletedAt: { not: null } }
 
-// Using isSet (for optional fields)
+// Using isSet (for optional fields, MongoDB only)
 where: { middleName: { isSet: true } }
 ```
 
@@ -200,9 +200,7 @@ where: {
 
 // Users without profile
 where: {
-  profile: {
-    isNot: null
-  }
+  profile: null
 }
 ```
 

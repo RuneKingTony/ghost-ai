@@ -7,10 +7,10 @@ Execute multiple operations atomically.
 Array of operations executed in order:
 
 ```typescript
-const [user, post] = await prisma.$transaction([
-  prisma.user.create({ data: { email: 'alice@prisma.io' } }),
-  prisma.post.create({ data: { title: 'Hello', authorId: 1 } })
-])
+await prisma.$transaction(async (tx) => {
+  const user = await tx.user.create({ data: { email: 'alice@prisma.io' } })
+  await tx.post.create({ data: { title: 'Hello', authorId: user.id } })
+})
 ```
 
 ### All or nothing
@@ -151,7 +151,7 @@ try {
     // operations
   })
 } catch (e) {
-  if (e.code === 'P2002') {
+  if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
     // Handle unique constraint violation
   }
   throw e

@@ -27,7 +27,7 @@ bunx --bun prisma init
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--datasource-provider` | Database provider: `postgresql`, `mysql`, `sqlite`, `sqlserver`, `mongodb`, `cockroachdb` | `postgresql` |
+| `--datasource-provider` | Database provider: `postgresql`, `mysql`, `sqlite`, `sqlserver`, `mongodb`, `cockroachdb` (`prisma+postgres` is available only through `--db`) | `postgresql` |
 | `--db` | Provisions a fully managed Prisma Postgres database on the Prisma Data Platform | - |
 | `--url` | Define a custom datasource url | - |
 | `--generator-provider` | Define the generator provider to use | `prisma-client` |

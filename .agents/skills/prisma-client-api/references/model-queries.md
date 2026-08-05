@@ -124,7 +124,7 @@ const result = await prisma.user.createMany({
 
 ### createManyAndReturn
 
-Create multiple and return them:
+Create multiple and return them (PostgreSQL, CockroachDB, SQLite only):
 
 ```typescript
 const users = await prisma.user.createManyAndReturn({
@@ -178,6 +178,8 @@ const result = await prisma.user.updateMany({
 
 ### updateManyAndReturn
 
+Update multiple records and return them (PostgreSQL, CockroachDB, SQLite only; `skipDuplicates` unavailable for MongoDB, SQL Server, and SQLite):
+
 ```typescript
 const users = await prisma.user.updateManyAndReturn({
   where: { role: 'USER' },
@@ -220,7 +222,11 @@ const result = await prisma.user.deleteMany({
   where: { role: 'GUEST' }
 })
 // Returns { count: 5 }
+```
 
+> Warning: `deleteMany({})` deletes every `User` row and should only be used with extreme caution.
+
+```typescript
 // Delete all
 const result = await prisma.user.deleteMany({})
 ```

@@ -203,10 +203,12 @@ const users = await prisma.user.findMany({
 ```typescript
 const users = await prisma.user.findMany({
   orderBy: {
-    name: { sort: 'asc', nulls: 'last' }
+    lastName: { sort: 'asc', nulls: 'last' }
   }
 })
 ```
+
+Use an optional scalar field like `lastName` for null ordering. Null ordering is unsupported by MongoDB and throws `P2009` when applied to required or relation fields.
 
 ## take & skip
 
@@ -248,12 +250,14 @@ const firstPage = await prisma.user.findMany({
 })
 
 // Next page using cursor
-const nextPage = await prisma.user.findMany({
-  take: 10,
-  skip: 1,  // Skip the cursor record
-  cursor: { id: firstPage[firstPage.length - 1].id },
-  orderBy: { id: 'asc' }
-})
+const nextPage = firstPage.length > 0
+  ? await prisma.user.findMany({
+      take: 10,
+      skip: 1,  // Skip the cursor record
+      cursor: { id: firstPage[firstPage.length - 1].id },
+      orderBy: { id: 'asc' }
+    })
+  : []
 ```
 
 ## distinct
