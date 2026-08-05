@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.6.5",
+    "@clerk/ui": "1.28.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.28.0",
@@ -29,5 +31,8 @@
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@clerk/localizations": "4.13.10"
   }
 }
