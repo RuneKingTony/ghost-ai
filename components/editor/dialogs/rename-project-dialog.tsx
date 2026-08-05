@@ -1,7 +1,7 @@
 "use client"
 
 import { AppDialog } from "@/components/editor/app-dialog"
-import { useProjectDialogsContext } from "@/components/editor/project-dialogs-provider"
+import { useProjectActionsContext } from "@/components/editor/project-actions-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -11,10 +11,11 @@ function RenameProjectDialog() {
     activeProject,
     name,
     isLoading,
+    error,
     setName,
     closeDialog,
     confirmRename,
-  } = useProjectDialogsContext()
+  } = useProjectActionsContext()
 
   const isOpen = dialog === "rename" && activeProject !== null
 
@@ -60,6 +61,8 @@ function RenameProjectDialog() {
           onChange={(event) => setName(event.target.value)}
           autoFocus
         />
+
+        {error && <p className="text-sm text-error">{error}</p>}
       </form>
     </AppDialog>
   )

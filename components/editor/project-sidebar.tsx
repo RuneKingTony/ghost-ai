@@ -1,31 +1,29 @@
 "use client"
 
-import { useMemo } from "react"
 import { Plus, X } from "lucide-react"
 
 import { ProjectListItem } from "@/components/editor/project-list-item"
-import { useProjectDialogsContext } from "@/components/editor/project-dialogs-provider"
+import { useProjectActionsContext } from "@/components/editor/project-actions-provider"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
+import type { Project } from "@/types/project"
 
 interface ProjectSidebarProps {
   isOpen: boolean
   onClose: () => void
+  ownedProjects: Project[]
+  sharedProjects: Project[]
 }
 
-function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
-  const { projects, openCreateDialog, openRenameDialog, openDeleteDialog } =
-    useProjectDialogsContext()
-
-  const myProjects = useMemo(
-    () => projects.filter((project) => project.isOwner),
-    [projects]
-  )
-  const sharedProjects = useMemo(
-    () => projects.filter((project) => !project.isOwner),
-    [projects]
-  )
+function ProjectSidebar({
+  isOpen,
+  onClose,
+  ownedProjects,
+  sharedProjects,
+}: ProjectSidebarProps) {
+  const { openCreateDialog, openRenameDialog, openDeleteDialog } =
+    useProjectActionsContext()
 
   return (
     <>
@@ -74,12 +72,12 @@ function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
             value="my-projects"
             className="flex flex-1 flex-col overflow-y-auto py-2"
           >
-            {myProjects.length === 0 ? (
+            {ownedProjects.length === 0 ? (
               <div className="flex flex-1 items-center justify-center text-center text-sm text-copy-muted">
                 No projects yet.
               </div>
             ) : (
-              myProjects.map((project) => (
+              ownedProjects.map((project) => (
                 <ProjectListItem
                   key={project.id}
                   project={project}

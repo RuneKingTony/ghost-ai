@@ -1,12 +1,12 @@
 "use client"
 
 import { AppDialog } from "@/components/editor/app-dialog"
-import { useProjectDialogsContext } from "@/components/editor/project-dialogs-provider"
+import { useProjectActionsContext } from "@/components/editor/project-actions-provider"
 import { Button } from "@/components/ui/button"
 
 function DeleteProjectDialog() {
-  const { dialog, activeProject, isLoading, closeDialog, confirmDelete } =
-    useProjectDialogsContext()
+  const { dialog, activeProject, isLoading, error, closeDialog, confirmDelete } =
+    useProjectActionsContext()
 
   const isOpen = dialog === "delete" && activeProject !== null
 
@@ -36,7 +36,9 @@ function DeleteProjectDialog() {
           </Button>
         </>
       }
-    />
+    >
+      {error && <p className="text-sm text-error">{error}</p>}
+    </AppDialog>
   )
 }
 

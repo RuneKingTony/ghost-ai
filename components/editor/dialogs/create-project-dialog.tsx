@@ -1,13 +1,21 @@
 "use client"
 
 import { AppDialog } from "@/components/editor/app-dialog"
-import { useProjectDialogsContext } from "@/components/editor/project-dialogs-provider"
+import { useProjectActionsContext } from "@/components/editor/project-actions-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 function CreateProjectDialog() {
-  const { dialog, name, slug, isLoading, setName, closeDialog, confirmCreate } =
-    useProjectDialogsContext()
+  const {
+    dialog,
+    name,
+    roomId,
+    isLoading,
+    error,
+    setName,
+    closeDialog,
+    confirmCreate,
+  } = useProjectActionsContext()
 
   const isOpen = dialog === "create"
 
@@ -53,8 +61,10 @@ function CreateProjectDialog() {
         </div>
 
         <p className="text-sm text-copy-muted">
-          Slug: <span className="font-mono text-copy-secondary">{slug || "—"}</span>
+          Room ID: <span className="font-mono text-copy-secondary">{roomId || "—"}</span>
         </p>
+
+        {error && <p className="text-sm text-error">{error}</p>}
       </form>
     </AppDialog>
   )
