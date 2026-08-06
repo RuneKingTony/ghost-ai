@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Check, Copy, X } from "lucide-react"
 
 import { AppDialog } from "@/components/editor/app-dialog"
@@ -32,16 +32,11 @@ function ShareProjectDialog({
   const [isCopied, setIsCopied] = useState(false)
   const activeLoadRef = useRef(0)
   const activeControllerRef = useRef<AbortController | null>(null)
+  const shouldRefreshAfterLoadRef = useRef(false)
+  const copyTimeoutRef = useRef<number | null>(null)
 
-  useEffect(() => {
-    if (!open) return
-
-    const controller = new AbortController()
-    activeControllerRef.current?.abort()
-    activeControllerRef.current = controller
-    const requestId = ++activeLoadRef.current
-
-    async function loadCollaborators() {
+  const fetchCollaborators = useCallback(
+    async (requestId: number, controller: AbortController) => {
       setIsLoading(true)
       setError(null)
 
@@ -64,31 +59,69 @@ function ShareProjectDialog({
         if (error instanceof Error && error.name === "AbortError") return
         setError("Couldn't load collaborators.")
       } finally {
-        if (requestId !== activeLoadRef.current) return
-        setIsLoading(false)
+        const isActive = requestId === activeLoadRef.current
+        if (isActive) {
+          setIsLoading(false)
+        }
       }
+    },
+    [projectId]
+  )
+
+  const loadCollaborators = useCallback(async () => {
+    const controller = new AbortController()
+    activeControllerRef.current = controller
+    const requestId = ++activeLoadRef.current
+
+    await fetchCollaborators(requestId, controller)
+
+    const shouldRefresh = shouldRefreshAfterLoadRef.current
+    if (shouldRefresh && activeControllerRef.current === controller) {
+      shouldRefreshAfterLoadRef.current = false
+      const nextController = new AbortController()
+      activeControllerRef.current = nextController
+      const nextRequestId = ++activeLoadRef.current
+      await fetchCollaborators(nextRequestId, nextController)
     }
 
+    if (activeControllerRef.current === controller) {
+      activeControllerRef.current = null
+    }
+  }, [fetchCollaborators])
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current)
+        copyTimeoutRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current)
+        copyTimeoutRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+
+    activeControllerRef.current?.abort()
     loadCollaborators()
 
     return () => {
-      controller.abort()
-      if (activeControllerRef.current === controller) {
-        activeControllerRef.current = null
-      }
+      activeControllerRef.current?.abort()
+      activeControllerRef.current = null
     }
-  }, [open, projectId])
+  }, [open, projectId, loadCollaborators])
 
   async function handleInvite() {
     const trimmedEmail = email.trim()
     if (!trimmedEmail) return
-
-    if (activeControllerRef.current) {
-      activeControllerRef.current.abort()
-      activeControllerRef.current = null
-      activeLoadRef.current += 1
-      setIsLoading(false)
-    }
 
     setIsInviting(true)
     setError(null)
@@ -115,6 +148,12 @@ function ShareProjectDialog({
       }
       setCollaborators((current) => [...current, collaborator])
       setEmail("")
+
+      if (activeControllerRef.current) {
+        shouldRefreshAfterLoadRef.current = true
+      } else {
+        await loadCollaborators()
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Couldn't invite that email."
@@ -155,9 +194,26 @@ function ShareProjectDialog({
 
   async function handleCopyLink() {
     const url = `${window.location.origin}/editor/${projectId}`
-    await navigator.clipboard.writeText(url)
-    setIsCopied(true)
-    setTimeout(() => setIsCopied(false), 2000)
+
+    try {
+      await navigator.clipboard.writeText(url)
+      setIsCopied(true)
+
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current)
+      }
+
+      copyTimeoutRef.current = window.setTimeout(() => {
+        setIsCopied(false)
+        copyTimeoutRef.current = null
+      }, 2000)
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message || "Could not copy link."
+          : "Could not copy link."
+      )
+    }
   }
 
   return (

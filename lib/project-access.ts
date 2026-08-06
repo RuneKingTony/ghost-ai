@@ -15,7 +15,8 @@ async function getCurrentIdentity(): Promise<CurrentIdentity> {
   }
 
   const user = await currentUser()
-  const email = user?.primaryEmailAddress?.emailAddress ?? null
+  const email =
+    user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null
 
   return { userId, email }
 }

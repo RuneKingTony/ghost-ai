@@ -18,6 +18,7 @@ interface ProjectListItemProps {
   isActive?: boolean
   onRename: (project: Project) => void
   onDelete: (project: Project) => void
+  onLinkClick?: () => void
 }
 
 function ProjectListItem({
@@ -25,6 +26,7 @@ function ProjectListItem({
   isActive,
   onRename,
   onDelete,
+  onLinkClick,
 }: ProjectListItemProps) {
   return (
     <div
@@ -35,6 +37,7 @@ function ProjectListItem({
     >
       <Link
         href={`/editor/${project.id}`}
+        onClick={onLinkClick}
         className="min-w-0 flex-1 truncate text-sm text-copy-primary"
       >
         {project.name}

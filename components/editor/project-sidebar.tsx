@@ -86,6 +86,7 @@ function ProjectSidebar({
                   isActive={project.id === activeProjectId}
                   onRename={openRenameDialog}
                   onDelete={openDeleteDialog}
+                  onLinkClick={onClose}
                 />
               ))
             )}
@@ -107,6 +108,7 @@ function ProjectSidebar({
                   isActive={project.id === activeProjectId}
                   onRename={openRenameDialog}
                   onDelete={openDeleteDialog}
+                  onLinkClick={onClose}
                 />
               ))
             )}
