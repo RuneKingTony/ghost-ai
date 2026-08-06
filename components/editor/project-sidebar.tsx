@@ -14,6 +14,7 @@ interface ProjectSidebarProps {
   onClose: () => void
   ownedProjects: Project[]
   sharedProjects: Project[]
+  activeProjectId?: string | null
 }
 
 function ProjectSidebar({
@@ -21,6 +22,7 @@ function ProjectSidebar({
   onClose,
   ownedProjects,
   sharedProjects,
+  activeProjectId,
 }: ProjectSidebarProps) {
   const { openCreateDialog, openRenameDialog, openDeleteDialog } =
     useProjectActionsContext()
@@ -81,6 +83,7 @@ function ProjectSidebar({
                 <ProjectListItem
                   key={project.id}
                   project={project}
+                  isActive={project.id === activeProjectId}
                   onRename={openRenameDialog}
                   onDelete={openDeleteDialog}
                 />
@@ -101,6 +104,7 @@ function ProjectSidebar({
                 <ProjectListItem
                   key={project.id}
                   project={project}
+                  isActive={project.id === activeProjectId}
                   onRename={openRenameDialog}
                   onDelete={openDeleteDialog}
                 />

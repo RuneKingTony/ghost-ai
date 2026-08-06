@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -9,18 +10,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 import type { Project } from "@/types/project"
 
 interface ProjectListItemProps {
   project: Project
+  isActive?: boolean
   onRename: (project: Project) => void
   onDelete: (project: Project) => void
 }
 
-function ProjectListItem({ project, onRename, onDelete }: ProjectListItemProps) {
+function ProjectListItem({
+  project,
+  isActive,
+  onRename,
+  onDelete,
+}: ProjectListItemProps) {
   return (
-    <div className="group flex items-center justify-between gap-2 rounded-xl px-2.5 py-2 hover:bg-subtle">
-      <span className="truncate text-sm text-copy-primary">{project.name}</span>
+    <div
+      className={cn(
+        "group flex items-center justify-between gap-2 rounded-xl px-2.5 py-2 hover:bg-subtle",
+        isActive && "bg-subtle"
+      )}
+    >
+      <Link
+        href={`/editor/${project.id}`}
+        className="min-w-0 flex-1 truncate text-sm text-copy-primary"
+      >
+        {project.name}
+      </Link>
 
       {project.isOwner && (
         <DropdownMenu>

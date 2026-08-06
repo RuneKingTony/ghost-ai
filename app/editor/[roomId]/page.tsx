@@ -1,45 +1,32 @@
-import { auth, currentUser } from "@clerk/nextjs/server"
-import { notFound } from "next/navigation"
+import { redirect } from "next/navigation"
 
+import { AccessDenied } from "@/components/editor/access-denied"
 import { prisma } from "@/lib/prisma"
+import { getCurrentIdentity, hasProjectAccess } from "@/lib/project-access"
 
 interface WorkspacePageProps {
-  params: Promise<{ projectId: string }>
+  params: Promise<{ roomId: string }>
 }
 
 export default async function WorkspacePage({ params }: WorkspacePageProps) {
-  const { projectId } = await params
-  const { userId } = await auth()
+  const { roomId } = await params
+  const identity = await getCurrentIdentity()
 
-  if (!userId) {
-    notFound()
+  if (!identity.userId) {
+    redirect("/sign-in")
   }
 
-  const project = await prisma.project.findUnique({ where: { id: projectId } })
+  const project = await prisma.project.findUnique({ where: { id: roomId } })
 
-  if (!project) {
-    notFound()
-  }
-
-  const isOwner = project.ownerId === userId
-
-  if (!isOwner) {
-    const user = await currentUser()
-    const email = user?.primaryEmailAddress?.emailAddress
-    const collaborator = email
-      ? await prisma.projectCollaborator.findUnique({
-          where: { projectId_email: { projectId, email } },
-        })
-      : null
-
-    if (!collaborator) {
-      notFound()
-    }
+  if (!project || !(await hasProjectAccess(project, identity))) {
+    return <AccessDenied />
   }
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-1.5 px-4 text-center">
-      <h1 className="text-lg font-medium text-copy-primary">{project.name}</h1>
+      <h1 className="text-lg font-medium text-copy-primary">
+        {project.name}
+      </h1>
       <p className="text-sm text-copy-muted">Canvas coming soon.</p>
     </div>
   )
