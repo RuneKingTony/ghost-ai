@@ -8,19 +8,27 @@ import {
   Background,
   BackgroundVariant,
   ConnectionMode,
+  MarkerType,
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
 } from "@xyflow/react"
+import type { DefaultEdgeOptions } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
 
 import { CanvasNodeRenderer } from "@/components/editor/canvas/canvas-node"
 import { SHAPE_PANEL_DRAG_TYPE, ShapePanel } from "@/components/editor/canvas/shape-panel"
-import { DEFAULT_NODE_COLOR } from "@/types/canvas"
+import { DEFAULT_NODE_COLOR, EDGE_COLOR } from "@/types/canvas"
 import type { CanvasEdge, CanvasNode, ShapeDragPayload } from "@/types/canvas"
 
 const nodeTypes = { canvasNode: CanvasNodeRenderer }
+
+const defaultEdgeOptions: DefaultEdgeOptions = {
+  type: "smoothstep",
+  markerEnd: { type: MarkerType.ArrowClosed, color: EDGE_COLOR },
+  style: { stroke: EDGE_COLOR, strokeWidth: 1.5 },
+}
 
 function Canvas() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
@@ -113,6 +121,7 @@ function CanvasFlow({
         onConnect={onConnect}
         onDelete={onDelete}
         connectionMode={ConnectionMode.Loose}
+        defaultEdgeOptions={defaultEdgeOptions}
         fitView
       >
         <Background variant={BackgroundVariant.Dots} />

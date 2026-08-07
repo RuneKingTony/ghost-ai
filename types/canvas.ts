@@ -34,7 +34,7 @@ interface CanvasNodeData extends Record<string, unknown> {
 }
 
 type CanvasNode = Node<CanvasNodeData, "canvasNode">
-type CanvasEdge = Edge<Record<string, never>, "canvasEdge">
+type CanvasEdge = Edge<Record<string, never>, "smoothstep">
 
 interface ShapeSize {
   width: number
@@ -52,12 +52,16 @@ const NODE_SHAPE_SIZES: Record<NodeShape, ShapeSize> = {
 
 const DEFAULT_NODE_COLOR = NODE_COLORS[0].fill
 
+const MIN_NODE_SIZE: ShapeSize = { width: 40, height: 40 }
+
+const EDGE_COLOR = "#f8fafc"
+
 interface ShapeDragPayload {
   shape: NodeShape
   size: ShapeSize
 }
 
-export { DEFAULT_NODE_COLOR, NODE_COLORS, NODE_SHAPE_SIZES, NODE_SHAPES }
+export { DEFAULT_NODE_COLOR, EDGE_COLOR, MIN_NODE_SIZE, NODE_COLORS, NODE_SHAPE_SIZES, NODE_SHAPES }
 export type {
   CanvasEdge,
   CanvasNode,
