@@ -4,9 +4,12 @@ import { useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
 
 import { AiSidebarPlaceholder } from "@/components/editor/ai-sidebar-placeholder"
+import { StarterTemplateContext } from "@/components/editor/canvas/starter-template-context"
 import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { ProjectActionsProvider } from "@/components/editor/project-actions-provider"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
+import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal"
+import type { CanvasTemplate } from "@/components/editor/starter-templates"
 import type { Project } from "@/types/project"
 
 interface EditorShellProps {
@@ -23,6 +26,8 @@ function EditorShell({
   const pathname = usePathname()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false)
+  const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
+  const [pendingTemplate, setPendingTemplate] = useState<CanvasTemplate | null>(null)
 
   const activeProject = useMemo(() => {
     const match = pathname.match(/^\/editor\/([^/]+)$/)
@@ -46,6 +51,7 @@ function EditorShell({
           isAiSidebarOpen={isAiSidebarOpen}
           onToggleAiSidebar={() => setIsAiSidebarOpen((open) => !open)}
           onShare={() => {}}
+          onOpenStarterTemplates={() => setIsTemplatesModalOpen(true)}
         />
         <ProjectSidebar
           isOpen={isSidebarOpen}
@@ -54,7 +60,14 @@ function EditorShell({
           sharedProjects={sharedProjects}
           activeProjectId={activeProject?.id ?? null}
         />
-        <main className="flex-1 overflow-hidden bg-base">{children}</main>
+        <StarterTemplateContext.Provider
+          value={{
+            pendingTemplate,
+            clearPendingTemplate: () => setPendingTemplate(null),
+          }}
+        >
+          <main className="flex-1 overflow-hidden bg-base">{children}</main>
+        </StarterTemplateContext.Provider>
         {activeProject && (
           <AiSidebarPlaceholder
             isOpen={isAiSidebarOpen}
@@ -62,6 +75,11 @@ function EditorShell({
           />
         )}
       </div>
+      <StarterTemplatesModal
+        open={isTemplatesModalOpen}
+        onOpenChange={setIsTemplatesModalOpen}
+        onImport={setPendingTemplate}
+      />
     </ProjectActionsProvider>
   )
 }
