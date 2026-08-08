@@ -2,25 +2,30 @@
 
 import "@xyflow/react/dist/style.css"
 
-import { useCallback, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import type { DragEvent } from "react"
 import {
   Background,
   BackgroundVariant,
   ConnectionMode,
   MarkerType,
-  MiniMap,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
 } from "@xyflow/react"
 import type { DefaultEdgeOptions } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
+import { useCanRedo, useCanUndo, useRedo, useUndo } from "@liveblocks/react"
 
 import { CanvasNodeRenderer } from "@/components/editor/canvas/canvas-node"
+import { ControlBar } from "@/components/editor/canvas/control-bar"
 import { SHAPE_PANEL_DRAG_TYPE, ShapePanel } from "@/components/editor/canvas/shape-panel"
+import { useStarterTemplateContext } from "@/components/editor/canvas/starter-template-context"
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { DEFAULT_NODE_COLOR, EDGE_COLOR } from "@/types/canvas"
 import type { CanvasEdge, CanvasNode, ShapeDragPayload } from "@/types/canvas"
+
+const ZOOM_DURATION = 200
 
 const nodeTypes = { canvasNode: CanvasNodeRenderer }
 
@@ -69,8 +74,51 @@ function CanvasFlow({
   onConnect,
   onDelete,
 }: CanvasFlowProps) {
-  const { screenToFlowPosition } = useReactFlow()
+  const reactFlowInstance = useReactFlow()
+  const { screenToFlowPosition, zoomIn, zoomOut, fitView } = reactFlowInstance
   const nodeCounter = useRef(0)
+
+  const undo = useUndo()
+  const redo = useRedo()
+  const canUndo = useCanUndo()
+  const canRedo = useCanRedo()
+
+  const handleZoomIn = useCallback(() => zoomIn({ duration: ZOOM_DURATION }), [zoomIn])
+  const handleZoomOut = useCallback(() => zoomOut({ duration: ZOOM_DURATION }), [zoomOut])
+  const handleFitView = useCallback(() => fitView({ duration: ZOOM_DURATION }), [fitView])
+
+  useKeyboardShortcuts({ reactFlowInstance, onUndo: undo, onRedo: redo })
+
+  const { pendingTemplate, clearPendingTemplate } = useStarterTemplateContext()
+  const shouldFitViewAfterImportRef = useRef(false)
+  const nodesRef = useRef(nodes)
+  const edgesRef = useRef(edges)
+
+  useEffect(() => {
+    nodesRef.current = nodes
+  }, [nodes])
+
+  useEffect(() => {
+    edgesRef.current = edges
+  }, [edges])
+
+  useEffect(() => {
+    if (!pendingTemplate) return
+
+    onDelete({ nodes: nodesRef.current, edges: edgesRef.current })
+
+    onNodesChange(pendingTemplate.nodes.map((item) => ({ type: "add", item })))
+    onEdgesChange(pendingTemplate.edges.map((item) => ({ type: "add", item })))
+
+    shouldFitViewAfterImportRef.current = true
+    clearPendingTemplate()
+  }, [pendingTemplate, onDelete, onNodesChange, onEdgesChange, clearPendingTemplate])
+
+  useEffect(() => {
+    if (!shouldFitViewAfterImportRef.current) return
+    shouldFitViewAfterImportRef.current = false
+    fitView({ duration: ZOOM_DURATION })
+  }, [nodes, fitView])
 
   const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -125,9 +173,17 @@ function CanvasFlow({
         fitView
       >
         <Background variant={BackgroundVariant.Dots} />
-        <MiniMap />
       </ReactFlow>
       <ShapePanel />
+      <ControlBar
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitView={handleFitView}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+      />
     </div>
   )
 }
