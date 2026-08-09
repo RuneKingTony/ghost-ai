@@ -3,7 +3,7 @@
 import "@xyflow/react/dist/style.css"
 
 import { useCallback, useEffect, useRef } from "react"
-import type { DragEvent } from "react"
+import type { DragEvent, MouseEvent as ReactMouseEvent } from "react"
 import {
   Background,
   BackgroundVariant,
@@ -15,12 +15,22 @@ import {
 } from "@xyflow/react"
 import type { DefaultEdgeOptions } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
-import { useCanRedo, useCanUndo, useRedo, useUndo } from "@liveblocks/react"
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+  useUpdateMyPresence,
+} from "@liveblocks/react"
 
 import { CanvasNodeRenderer } from "@/components/editor/canvas/canvas-node"
+import { useCanvasSaveContext } from "@/components/editor/canvas/canvas-save-context"
 import { ControlBar } from "@/components/editor/canvas/control-bar"
+import { LiveCursors } from "@/components/editor/canvas/live-cursors"
+import { PresenceAvatars } from "@/components/editor/canvas/presence-avatars"
 import { SHAPE_PANEL_DRAG_TYPE, ShapePanel } from "@/components/editor/canvas/shape-panel"
 import { useStarterTemplateContext } from "@/components/editor/canvas/starter-template-context"
+import { useCanvasAutosave } from "@/hooks/use-canvas-autosave"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { DEFAULT_NODE_COLOR, EDGE_COLOR } from "@/types/canvas"
 import type { CanvasEdge, CanvasNode, ShapeDragPayload } from "@/types/canvas"
@@ -35,7 +45,11 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   style: { stroke: EDGE_COLOR, strokeWidth: 1.5 },
 }
 
-function Canvas() {
+interface CanvasProps {
+  projectId: string
+}
+
+function Canvas({ projectId }: CanvasProps) {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
       suspense: true,
@@ -46,6 +60,7 @@ function Canvas() {
   return (
     <ReactFlowProvider>
       <CanvasFlow
+        projectId={projectId}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -58,6 +73,7 @@ function Canvas() {
 }
 
 interface CanvasFlowProps {
+  projectId: string
   nodes: CanvasNode[]
   edges: CanvasEdge[]
   onNodesChange: ReturnType<typeof useLiveblocksFlow<CanvasNode, CanvasEdge>>["onNodesChange"]
@@ -67,6 +83,7 @@ interface CanvasFlowProps {
 }
 
 function CanvasFlow({
+  projectId,
   nodes,
   edges,
   onNodesChange,
@@ -78,6 +95,13 @@ function CanvasFlow({
   const { screenToFlowPosition, zoomIn, zoomOut, fitView } = reactFlowInstance
   const nodeCounter = useRef(0)
 
+  const { setSaveStatus } = useCanvasSaveContext()
+  const saveStatus = useCanvasAutosave({ projectId, nodes, edges })
+
+  useEffect(() => {
+    setSaveStatus(saveStatus)
+  }, [saveStatus, setSaveStatus])
+
   const undo = useUndo()
   const redo = useRedo()
   const canUndo = useCanUndo()
@@ -88,6 +112,21 @@ function CanvasFlow({
   const handleFitView = useCallback(() => fitView({ duration: ZOOM_DURATION }), [fitView])
 
   useKeyboardShortcuts({ reactFlowInstance, onUndo: undo, onRedo: redo })
+
+  const updateMyPresence = useUpdateMyPresence()
+
+  const handlePaneMouseMove = useCallback(
+    (event: ReactMouseEvent) => {
+      updateMyPresence({
+        cursor: screenToFlowPosition({ x: event.clientX, y: event.clientY }),
+      })
+    },
+    [updateMyPresence, screenToFlowPosition],
+  )
+
+  const handlePaneMouseLeave = useCallback(() => {
+    updateMyPresence({ cursor: null })
+  }, [updateMyPresence])
 
   const { pendingTemplate, clearPendingTemplate } = useStarterTemplateContext()
   const shouldFitViewAfterImportRef = useRef(false)
@@ -101,6 +140,37 @@ function CanvasFlow({
   useEffect(() => {
     edgesRef.current = edges
   }, [edges])
+
+  const hasAttemptedSavedLoadRef = useRef(false)
+
+  useEffect(() => {
+    if (hasAttemptedSavedLoadRef.current) return
+    hasAttemptedSavedLoadRef.current = true
+
+    if (nodesRef.current.length > 0 || edgesRef.current.length > 0) return
+
+    let cancelled = false
+
+    async function loadSavedCanvas() {
+      const response = await fetch(`/api/projects/${projectId}/canvas`)
+      if (!response.ok) return
+
+      const data: { canvas: { nodes: CanvasNode[]; edges: CanvasEdge[] } | null } =
+        await response.json()
+
+      if (cancelled || !data.canvas) return
+      if (nodesRef.current.length > 0 || edgesRef.current.length > 0) return
+
+      onNodesChange(data.canvas.nodes.map((item) => ({ type: "add", item })))
+      onEdgesChange(data.canvas.edges.map((item) => ({ type: "add", item })))
+    }
+
+    loadSavedCanvas()
+
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, onNodesChange, onEdgesChange])
 
   useEffect(() => {
     if (!pendingTemplate) return
@@ -170,10 +240,13 @@ function CanvasFlow({
         onDelete={onDelete}
         connectionMode={ConnectionMode.Loose}
         defaultEdgeOptions={defaultEdgeOptions}
+        onPaneMouseMove={handlePaneMouseMove}
+        onPaneMouseLeave={handlePaneMouseLeave}
         fitView
       >
         <Background variant={BackgroundVariant.Dots} />
       </ReactFlow>
+      <LiveCursors />
       <ShapePanel />
       <ControlBar
         onZoomIn={handleZoomIn}
@@ -184,6 +257,7 @@ function CanvasFlow({
         canUndo={canUndo}
         canRedo={canRedo}
       />
+      <PresenceAvatars />
     </div>
   )
 }

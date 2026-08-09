@@ -16,10 +16,10 @@ interface CanvasRoomProps {
 function CanvasRoom({ roomId }: CanvasRoomProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
-      <RoomProvider id={roomId} initialPresence={{ cursor: null, isThinking: false }}>
+      <RoomProvider id={roomId} initialPresence={{ cursor: null, thinking: false }}>
         <ErrorBoundary fallback={<CanvasErrorFallback />}>
           <ClientSideSuspense fallback={<CanvasLoadingFallback />}>
-            <Canvas />
+            <Canvas projectId={roomId} />
           </ClientSideSuspense>
         </ErrorBoundary>
       </RoomProvider>
