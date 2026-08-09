@@ -23,6 +23,7 @@ import {
   useUpdateMyPresence,
 } from "@liveblocks/react"
 
+import { CanvasEdgeRenderer } from "@/components/editor/canvas/canvas-edge"
 import { CanvasNodeRenderer } from "@/components/editor/canvas/canvas-node"
 import { useCanvasSaveContext } from "@/components/editor/canvas/canvas-save-context"
 import { ControlBar } from "@/components/editor/canvas/control-bar"
@@ -38,6 +39,10 @@ import type { CanvasEdge, CanvasNode, ShapeDragPayload } from "@/types/canvas"
 const ZOOM_DURATION = 200
 
 const nodeTypes = { canvasNode: CanvasNodeRenderer }
+// Registering under the built-in "smoothstep" key overrides that renderer for every
+// edge (all edges use type "smoothstep" via defaultEdgeOptions below) — confirmed via
+// @xyflow/react's EdgeWrapper source: `edgeTypes?.[edgeType] || builtinEdgeTypes[edgeType]`.
+const edgeTypes = { smoothstep: CanvasEdgeRenderer }
 
 const defaultEdgeOptions: DefaultEdgeOptions = {
   type: "smoothstep",
@@ -205,7 +210,15 @@ function CanvasFlow({
       }
 
       const { shape, size }: ShapeDragPayload = JSON.parse(raw)
-      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      // screenToFlowPosition gives the flow-space point under the cursor, but a node's
+      // `position` is its top-left corner — the drag preview (shape-panel.tsx's
+      // setDragImage) is centered on the cursor, so the dropped node must be offset by
+      // half its size to land where the ghost was actually shown, not shifted down-right.
+      const cursorPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      const position = {
+        x: cursorPosition.x - size.width / 2,
+        y: cursorPosition.y - size.height / 2,
+      }
 
       nodeCounter.current += 1
       const id = `${shape}-${Date.now()}-${nodeCounter.current}`
@@ -234,6 +247,7 @@ function CanvasFlow({
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
