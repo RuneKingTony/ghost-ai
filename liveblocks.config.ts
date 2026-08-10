@@ -1,3 +1,5 @@
+import type { AiChatMessagePayload, AiStatusFeedPayload } from "@/types/tasks"
+
 // Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
 declare global {
@@ -24,16 +26,25 @@ declare global {
     }
 
     // Custom events, for useBroadcastEvent, useEventListener
-    RoomEvent: Record<string, never>
-      // Example has two events, using a union
-      // | { type: "PLAY" }
-      // | { type: "REACTION"; emoji: "🔥" };
+    RoomEvent: {
+      type: "ai-status"
+      runId: string
+      status: "started" | "processing" | "complete" | "error"
+      message: string
+    }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: Record<string, never>
       // Example, attaching coordinates to a thread
       // x: number;
       // y: number;
+
+    // Custom message payload for this app's Liveblocks feeds, for
+    // useFeedMessages, useCreateFeedMessage, etc. `FeedMessageData` is a
+    // single global type shared by every feed (Liveblocks doesn't type
+    // message data per feed id), so it's a union of each feed's payload:
+    // `ai-status-feed` (AI progress/presence) and `ai-chat` (sidebar chat).
+    FeedMessageData: AiStatusFeedPayload | AiChatMessagePayload
 
     // Custom room info set with resolveRoomsInfo, for useRoomInfo
     RoomInfo: Record<string, never>

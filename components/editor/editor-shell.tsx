@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
+import { LiveblocksProvider, RoomProvider } from "@liveblocks/react/suspense"
 
 import { AiSidebar } from "@/components/editor/ai-sidebar/ai-sidebar"
 import { CanvasSaveContext } from "@/components/editor/canvas/canvas-save-context"
@@ -79,15 +80,33 @@ function EditorShell({
           }}
         >
           <CanvasSaveContext.Provider value={{ setSaveStatus }}>
-            <main className="flex-1 overflow-hidden bg-base">{children}</main>
+            {activeProject ? (
+              // The AI sidebar needs the same live room as the canvas (it
+              // subscribes to the shared `ai-status-feed`), so the room
+              // context is established here, above both, rather than inside
+              // `CanvasRoom` alone — the canvas page and the sidebar are
+              // siblings of `{children}`, not nested inside one another.
+              <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+                <RoomProvider
+                  id={activeProject.id}
+                  initialPresence={{ cursor: null, thinking: false }}
+                >
+                  <main className="flex-1 overflow-hidden bg-base">
+                    {children}
+                  </main>
+                  <AiSidebar
+                    isOpen={isAiSidebarOpen}
+                    onClose={() => setIsAiSidebarOpen(false)}
+                  />
+                </RoomProvider>
+              </LiveblocksProvider>
+            ) : (
+              <main className="flex-1 overflow-hidden bg-base">
+                {children}
+              </main>
+            )}
           </CanvasSaveContext.Provider>
         </StarterTemplateContext.Provider>
-        {activeProject && (
-          <AiSidebar
-            isOpen={isAiSidebarOpen}
-            onClose={() => setIsAiSidebarOpen(false)}
-          />
-        )}
       </div>
       <StarterTemplatesModal
         open={isTemplatesModalOpen}

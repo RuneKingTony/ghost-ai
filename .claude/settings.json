@@ -8,7 +8,9 @@
       "Bash(git push *)",
       "Bash(mkdir -p /Users/anthonynkwa/Desktop/ghost-ai/prisma/models)",
       "Bash(npx prisma *)",
-      "Bash(kill 5197 5199)"
+      "Bash(kill 5197 5199)",
+      "Bash(npx tsx *)",
+      "Bash(jobs)"
     ],
     "additionalDirectories": [
       "/Users/anthonynkwa/Desktop/ghost-ai/prisma"

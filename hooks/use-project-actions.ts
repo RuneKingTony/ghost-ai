@@ -77,6 +77,7 @@ function useProjectActions() {
       setActiveProject(null)
       setName("")
       router.push(`/editor/${project.id}`)
+      router.refresh()
     } catch {
       setError("Couldn't create the project. Try again.")
     } finally {
