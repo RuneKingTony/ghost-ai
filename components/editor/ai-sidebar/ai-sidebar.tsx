@@ -1,12 +1,19 @@
 "use client"
 
-import { Bot, X } from "lucide-react"
+import { useMemo } from "react"
+import { Bot, Loader2, X } from "lucide-react"
+import { useFeedMessages } from "@liveblocks/react"
 
 import { AiArchitectTab } from "@/components/editor/ai-sidebar/ai-architect-tab"
 import { SpecsTab } from "@/components/editor/ai-sidebar/specs-tab"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
+import {
+  AI_STATUS_FEED_ID,
+  isAiStatusFeedPayload,
+  type AiStatusFeedPayload,
+} from "@/types/tasks"
 
 interface AiSidebarProps {
   isOpen: boolean
@@ -16,7 +23,31 @@ interface AiSidebarProps {
 const TAB_TRIGGER_CLASSES =
   "text-copy-muted data-[state=active]:bg-ai/15 data-[state=active]:text-ai-text"
 
+// The feed hook returns a page of messages, not guaranteed to be sorted —
+// pick the true latest by `createdAt` rather than assuming array order, and
+// validate before trusting the payload shape (per `code-standards.md`'s
+// "validate unknown external input" rule).
+function useLatestAiStatus(): AiStatusFeedPayload | null {
+  const { messages } = useFeedMessages(AI_STATUS_FEED_ID)
+
+  return useMemo(() => {
+    let latest: { createdAt: number; data: AiStatusFeedPayload } | null = null
+
+    for (const message of messages ?? []) {
+      if (!isAiStatusFeedPayload(message.data)) continue
+      if (!latest || message.createdAt > latest.createdAt) {
+        latest = { createdAt: message.createdAt, data: message.data }
+      }
+    }
+
+    return latest?.data ?? null
+  }, [messages])
+}
+
 function AiSidebar({ isOpen, onClose }: AiSidebarProps) {
+  const latestStatus = useLatestAiStatus()
+  const isGenerating = latestStatus?.status === "thinking"
+
   return (
     <>
       {isOpen && (
@@ -57,6 +88,15 @@ function AiSidebar({ isOpen, onClose }: AiSidebarProps) {
           </Button>
         </div>
 
+        {isGenerating && (
+          <div className="flex shrink-0 items-center gap-2 border-b border-surface-border bg-ai/10 px-4 py-2 text-xs text-ai-text">
+            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+            <span className="truncate">
+              {latestStatus?.text ?? "Ghost AI is working…"}
+            </span>
+          </div>
+        )}
+
         <Tabs defaultValue="architect" className="flex flex-1 flex-col overflow-hidden">
           <TabsList className="mx-4 mt-4 w-fit self-start">
             <TabsTrigger value="architect" className={TAB_TRIGGER_CLASSES}>
@@ -71,7 +111,7 @@ function AiSidebar({ isOpen, onClose }: AiSidebarProps) {
             value="architect"
             className="flex flex-1 flex-col overflow-hidden"
           >
-            <AiArchitectTab />
+            <AiArchitectTab isGenerating={isGenerating} />
           </TabsContent>
 
           <TabsContent

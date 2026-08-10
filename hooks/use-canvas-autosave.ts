@@ -17,6 +17,7 @@ interface UseCanvasAutosaveOptions {
 function useCanvasAutosave({ projectId, nodes, edges }: UseCanvasAutosaveOptions) {
   const [status, setStatus] = useState<SaveStatus>("idle")
   const isFirstRunRef = useRef(true)
+  const saveQueueRef = useRef(Promise.resolve())
 
   useEffect(() => {
     if (isFirstRunRef.current) {
@@ -26,24 +27,28 @@ function useCanvasAutosave({ projectId, nodes, edges }: UseCanvasAutosaveOptions
 
     let cancelled = false
 
-    const timeoutId = setTimeout(async () => {
+    const timeoutId = setTimeout(() => {
       setStatus("saving")
 
-      try {
-        const response = await fetch(`/api/projects/${projectId}/canvas`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nodes, edges }),
-        })
+      // Chained onto the shared queue so PUTs are sent one at a time, in
+      // order, and a stale response can never land after a newer one.
+      saveQueueRef.current = saveQueueRef.current.catch(() => {}).then(async () => {
+        try {
+          const response = await fetch(`/api/projects/${projectId}/canvas`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nodes, edges }),
+          })
 
-        if (!response.ok) {
-          throw new Error("Save failed")
+          if (!response.ok) {
+            throw new Error("Save failed")
+          }
+
+          if (!cancelled) setStatus("saved")
+        } catch {
+          if (!cancelled) setStatus("error")
         }
-
-        if (!cancelled) setStatus("saved")
-      } catch {
-        if (!cancelled) setStatus("error")
-      }
+      })
     }, AUTOSAVE_DEBOUNCE_MS)
 
     return () => {
